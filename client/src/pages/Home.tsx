@@ -5,6 +5,7 @@
  */
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { translations } from "@/translations";
 import {
   ArrowDownRight,
   ArrowUpRight,
@@ -21,20 +22,21 @@ import {
   Linkedin,
   Mail,
   MapPin,
-  Menu,
   MessageCircle,
   MousePointer2,
   Orbit,
   PenTool,
-  Phone,
   Send,
   ServerCog,
   Sparkles,
   Video,
-  X,
 } from "lucide-react";
 
 const ASSETS = {
+  banners: [
+    "/media/kashyap-sunny-banner.png",
+    "/media/kashyap-sunny-anime-poster.png",
+  ],
   hero: "/media/sunny-hero-atmosphere.webp",
   earth: "/media/sunny-holographic-earth.webp",
   earthTexture: "/media/sunny-earth-rotation-texture.webp",
@@ -44,6 +46,26 @@ const ASSETS = {
   deloitte: "/media/deloitte-logo.png",
   virelapp: "/media/virelapp-logo.jpg",
 };
+const PALETTES = ["electric", "royal", "fire"] as const;
+const FOOTER_QUOTES = [
+  "There’s no meeting when both are running in the same direction.", "I became what I needed.",
+  "Somewhere between lost and found.", "Build quietly. Win loudly.", "I miss who we were.",
+  "Memories hurt differently.", "We became strangers again.", "Some goodbyes never end.",
+  "I was there. You weren't.", "Healing isn't forgetting.", "The silence was your answer.",
+  "I wish things stayed.", "Two souls can share a road and still never meet.",
+  "Not every journey leads to each other.", "Sometimes, the same direction means different destinations.",
+  "Parallel lives, separate worlds.", "We were moving together, just never toward each other.",
+  "Even parallel lines have a story of never meeting.", "Walking the same path doesn't mean sharing the same fate.",
+  "Somewhere between us, we lost the way.",
+] as const;
+
+const LANGUAGES = [
+  "English", "Mandarin Chinese", "Hindi", "Spanish", "Standard Arabic",
+  "French", "Italian", "Portuguese", "Indonesian", "Urdu", "Russian",
+  "Standard German", "Japanese", "Nigerian Pidgin", "Egyptian Arabic",
+  "Vietnamese", "Turkish", "Western Punjabi", "Swahili", "Tagalog",
+  "Filipino", "Cantonese", "Korean",
+] as const;
 
 const organizationLinks = {
   microsoftInstagram:
@@ -60,9 +82,7 @@ const organizationLinks = {
 const contactLinks = {
   email:
     "https://mail.google.com/mail/?view=cm&fs=1&to=businesskashyap014@gmail.com&su=Portfolio%20Inquiry%20for%20SunnY&body=Hello%20SunnY%2C%0A%0AI%20would%20like%20to%20connect%20about%20a%20project.%0A%0ABest%2C",
-  phone: "tel:+919693457255",
-  whatsapp: "https://wa.me/919693457255",
-  instagram: "https://www.instagram.com/kash_sunny",
+  instagram: "https://www.instagram.com/kash__sunny_",
   github: "https://github.com/cateropik-pvt",
   linkedin: "http://www.linkedin.com/in/cateropiksunny-ashish",
 };
@@ -204,11 +224,20 @@ function HoloEarth() {
 }
 
 export default function Home() {
-  const [navOpen, setNavOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-
+  const [bannerProgress, setBannerProgress] = useState(0);
+  const [bannerIndex, setBannerIndex] = useState(() => Math.floor(Math.random() * ASSETS.banners.length));
+  const [paletteIndex, setPaletteIndex] = useState(() => Math.floor(Math.random() * PALETTES.length));
+  const [languageOpen, setLanguageOpen] = useState(true);
+  const [selectedLanguage, setSelectedLanguage] = useState("English");
+  const [footerQuoteIndex, setFooterQuoteIndex] = useState(0);
+  const languagePack = translations[selectedLanguage as keyof typeof translations] ?? translations.English;
+  const t = (key: keyof typeof translations.English) => languagePack[key] ?? translations.English[key];
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
+    const onScroll = () => {
+      setScrolled(window.scrollY > 24);
+      setBannerProgress(Math.min(window.scrollY / 520, 1));
+    };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -226,7 +255,7 @@ export default function Home() {
     const scheduleCursorIdle = () => {
       document.body.classList.remove("cursor-idle");
       if (idleTimer) window.clearTimeout(idleTimer);
-      idleTimer = window.setTimeout(() => document.body.classList.add("cursor-idle"), 5000);
+      idleTimer = window.setTimeout(() => document.body.classList.add("cursor-idle"), 4000);
     };
     const onPointerMove = (event: PointerEvent) => {
       const transform = `translate3d(${event.clientX}px, ${event.clientY}px, 0)`;
@@ -246,49 +275,86 @@ export default function Home() {
     };
   }, []);
 
-  const closeNav = () => setNavOpen(false);
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setFooterQuoteIndex((current) => (current + 1) % FOOTER_QUOTES.length);
+    }, 5000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const randomizeBanner = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (!(event.target instanceof Element) || !event.target.closest("a")) return;
+    setBannerIndex((current) => {
+      if (ASSETS.banners.length < 2) return current;
+      let next = current;
+      while (next === current) next = Math.floor(Math.random() * ASSETS.banners.length);
+      return next;
+    });
+    setPaletteIndex((current) => {
+      let next = current;
+      while (next === current) next = Math.floor(Math.random() * PALETTES.length);
+      return next;
+    });
+  };
+
+  const chooseLanguage = (language: string) => {
+    setSelectedLanguage(language);
+    setLanguageOpen(false);
+  };
+  const serviceCopy = [
+    ["service_software", "service_software_desc"],
+    ["service_server", "service_server_desc"],
+    ["service_visual", "service_visual_desc"],
+    ["service_social", "service_social_desc"],
+  ] as const;
 
   return (
-    <div className="site-shell">
+    <div className="site-shell" data-palette={PALETTES[paletteIndex]} onClick={randomizeBanner}>
+      {languageOpen && (
+        <div className="language-alert-backdrop" role="presentation">
+          <section className="language-alert" role="dialog" aria-modal="true" aria-labelledby="language-title">
+            <div className="language-alert-kicker">{t("language_kicker")}</div>
+            <h2 id="language-title">{t("language_title")}</h2>
+            <p>{t("language_prompt")}</p>
+            <div className="language-options">
+              {LANGUAGES.map((language) => (
+                <button
+                  className={`language-option ${selectedLanguage === language ? "is-selected" : ""}`}
+                  type="button"
+                  key={language}
+                  onClick={() => chooseLanguage(language)}
+                >
+                  {language}
+                </button>
+              ))}
+            </div>
+          </section>
+        </div>
+      )}
       <div className="grain" aria-hidden="true" />
       <div className="cursor-dot" aria-hidden="true" />
       <div className="cursor-aura" aria-hidden="true" />
       <header className={`site-header ${scrolled ? "is-scrolled" : ""}`}>
-        <a className="brand" href="#home" aria-label="SunnY home" onClick={closeNav}>
+        <a className="brand" href="#home" aria-label="SunnY home">
           <img src={ASSETS.mark} alt="" />
-          <span className="brand-word">Sunn<span>Y</span><small>ORBITAL ID_014</small></span>
+          <span className="brand-word">Sunn<span>Y</span></span>
         </a>
-
-        <nav className={`site-nav ${navOpen ? "is-open" : ""}`} aria-label="Main navigation">
-          {[
-            ["Profile", "#profile"],
-            ["Experience", "#experience"],
-            ["Capabilities", "#capabilities"],
-            ["Contact", "#contact"],
-          ].map(([label, href], index) => (
-            <a href={href} key={href} onClick={closeNav}>
-              <span>0{index + 1}</span>
-              {label}
-            </a>
-          ))}
-        </nav>
 
         <a className="header-cta" href={contactLinks.email} target="_blank" rel="noreferrer">
-          Contact Me <Mail size={15} />
+          {t("contact_me")} <Mail size={15} />
         </a>
-        <button
-          className="nav-toggle"
-          type="button"
-          onClick={() => setNavOpen((open) => !open)}
-          aria-label={navOpen ? "Close navigation" : "Open navigation"}
-          aria-expanded={navOpen}
-        >
-          {navOpen ? <X size={22} /> : <Menu size={22} />}
-        </button>
       </header>
 
       <main>
         <section className="hero-section" id="home">
+          <div
+            className="hero-banner-shell"
+            style={{ "--banner-progress": bannerProgress } as React.CSSProperties}
+          >
+            <img key={bannerIndex} className="hero-banner" src={ASSETS.banners[bannerIndex]} alt="Kashyap Sunny portfolio poster" />
+            <div className="hero-banner-shade" />
+            <div className="hero-banner-caption"><span>KASHYAP SUNNY</span><i /> <small>PERSONAL PORTFOLIO / 2026</small></div>
+          </div>
           <img className="hero-atmosphere" src={ASSETS.hero} alt="" />
           <div className="hero-vignette" />
           <div className="hero-wire wire-one" />
@@ -300,26 +366,24 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, ease: [0.23, 1, 0.32, 1] }}
             >
-              <div className="eyebrow"><Sparkles size={14} /> SOFTWARE ENGINEER / INDIA</div>
-              <h1>Build the<br /><em>next</em> signal.</h1>
-              <p>
-                I’m SunnY — a software engineer who brings code, systems, and sharp communication into one capable operating rhythm.
-              </p>
+              <div className="eyebrow"><Sparkles size={14} /> {t("hero_eyebrow")}</div>
+              <h1>{t("hero_build")}<br /><em>{t("hero_next")}</em> {t("hero_signal")}</h1>
+              <p>{t("hero_intro")}</p>
               <div className="hero-actions">
                 <a className="button button-primary" href={contactLinks.email} target="_blank" rel="noreferrer">
-                  Contact Me <Mail size={18} />
+                  {t("contact_me")} <Mail size={18} />
                 </a>
                 <a className="button button-ghost" href="#experience">
-                  <BriefcaseBusiness size={17} /> View signal history
+                  <BriefcaseBusiness size={17} /> {t("view_history")}
                 </a>
               </div>
             </motion.div>
             <HoloEarth />
           </div>
           <div className="hero-footer">
-            <div className="availability"><span /> AVAILABLE FOR NEW WORK</div>
-            <a href="#profile" className="scroll-cue">SCROLL TO INITIALIZE <MousePointer2 size={14} /></a>
-            <div className="location-readout"><MapPin size={14} /> INDIA / GMT +5:30</div>
+            <div className="availability"><span /> {t("available")}</div>
+            <a href="#profile" className="scroll-cue">{t("scroll_initialize")} <MousePointer2 size={14} /></a>
+            <div className="location-readout"><MapPin size={14} /> {t("location")}</div>
           </div>
         </section>
 
@@ -327,23 +391,21 @@ export default function Home() {
           <div className="section-rail" aria-hidden="true"><span /></div>
           <div className="section-orbit profile-orbit" aria-hidden="true" />
           <Reveal direction="left" className="profile-intro">
-            <SignalLabel index="01">PROFILE</SignalLabel>
-            <h2>A multidisciplinary operator with a <em>systems</em> mind.</h2>
+            <SignalLabel index="01">{t("profile_label")}</SignalLabel>
+            <h2>{t("profile_heading")}</h2>
           </Reveal>
           <Reveal direction="right" delay={0.08} className="profile-details">
-            <p>
-              Software engineering is my primary language. I also bring video editing, scriptwriting, server management, and social media management into the same working system—so ideas can move from strategy to execution without losing their signal.
-            </p>
+            <p>{t("profile_text")}</p>
             <div className="qualification-note">
               <BadgeCheck size={22} />
-              <span><b>Creating opportunities and jobs for newbies</b> across management, graphic design, and more.</span>
+              <span>{t("qualification")}</span>
             </div>
           </Reveal>
           <Reveal direction="left" delay={0.12} className="skills-block">
-            <div className="skills-title"><Braces size={20} /><span>LANGUAGES / TOOLS</span></div>
+            <div className="skills-title"><Braces size={20} /><span>{t("skills_title")}</span></div>
             <div className="skill-cloud">
               {skills.map((skill, index) => <span key={skill} className={index === 6 || index === 7 ? "skill-hot" : ""}>{skill}</span>)}
-              <span className="skill-more">+ more</span>
+              <span className="skill-more">{t("more")}</span>
             </div>
           </Reveal>
         </section>
@@ -353,10 +415,10 @@ export default function Home() {
           <div className="experience-overlay" />
           <div className="section-frame">
             <Reveal direction="left" className="experience-heading">
-              <SignalLabel index="02">SIGNAL HISTORY</SignalLabel>
-              <h2>Experience that<br />ships with <em>context.</em></h2>
+              <SignalLabel index="02">{t("history_label")}</SignalLabel>
+              <h2>{t("history_heading")}</h2>
             </Reveal>
-            <p className="experience-intro">Technical foundations, security thinking, and leadership perspective collected across meaningful environments.</p>
+            <p className="experience-intro">{t("history_intro")}</p>
           </div>
 
           <div className="experience-list">
@@ -374,7 +436,7 @@ export default function Home() {
                   <div className="experience-links">
                     {item.links.map(({ label, href, icon: Icon }) => (
                       <a href={href} key={label} target="_blank" rel="noreferrer" aria-label={`${item.label} ${label}`}>
-                        <Icon size={16} /><span>{label}</span><ArrowUpRight size={14} />
+                        <Icon size={16} /><span>{label === "Website" ? t("website") : label === "Instagram" ? t("instagram") : t("discord")}</span><ArrowUpRight size={14} />
                       </a>
                     ))}
                   </div>
@@ -389,12 +451,12 @@ export default function Home() {
           <div className="orbit-node capability-node" aria-hidden="true" />
           <div className="capabilities-head">
             <Reveal direction="left">
-              <SignalLabel index="03">CAPABILITIES</SignalLabel>
-              <h2 className="alternate-heading"><span>03/</span>A working<br />signal system.</h2>
+              <SignalLabel index="03">{t("capabilities_label")}</SignalLabel>
+              <h2 className="alternate-heading"><span>03/</span>{t("capabilities_heading")}</h2>
             </Reveal>
             <Reveal direction="right" className="capabilities-note">
               <Orbit size={22} />
-              <p>Choose a lane or connect the full stack of capabilities.</p>
+              <p>{t("capabilities_note")}</p>
             </Reveal>
           </div>
           <div className="service-grid">
@@ -404,9 +466,9 @@ export default function Home() {
                 <Reveal direction={index % 2 === 0 ? "left" : "right"} delay={index * 0.05} key={service.title}>
                   <article className="service-card">
                     <div className="service-card-top"><span>{service.number}</span><Icon size={23} /></div>
-                    <h3>{service.title}</h3>
-                    <p>{service.description}</p>
-                    <a href="#contact">Discuss this lane <ChevronRight size={16} /></a>
+                    <h3>{t(serviceCopy[index][0])}</h3>
+                    <p>{t(serviceCopy[index][1])}</p>
+                    <a href="#contact">{t("discuss")} <ChevronRight size={16} /></a>
                   </article>
                 </Reveal>
               );
@@ -417,34 +479,27 @@ export default function Home() {
         <section className="contact-section section" id="contact">
           <div className="contact-flare" aria-hidden="true" />
           <Reveal direction="left" className="contact-copy">
-            <SignalLabel index="04">CONTACT</SignalLabel>
-            <h2>Have a signal<br />worth <em>building?</em></h2>
-            <p>Let’s make the next message count. Reach out through the channel that fits the moment.</p>
+            <SignalLabel index="04">{t("contact_label")}</SignalLabel>
+            <h2>{t("contact_heading")}</h2>
+            <p>{t("contact_text")}</p>
           </Reveal>
           <Reveal direction="right" delay={0.08} className="contact-terminal">
             <div className="terminal-top"><span /><span /><span /><b>OUTBOUND_MESSAGE.exe</b></div>
             <a className="terminal-main-link" href={contactLinks.email} target="_blank" rel="noreferrer">
-              <span className="terminal-prompt">&gt; EMAIL</span>
+              <span className="terminal-prompt">{t("email_prompt")}</span>
               <b>businesskashyap014@gmail.com</b>
               <ArrowUpRight size={21} />
             </a>
-            <div className="contact-channel-row">
-              <a href={contactLinks.phone}><Phone size={16} /><span>+91 96934 57255</span></a>
-              <a href={contactLinks.whatsapp} target="_blank" rel="noreferrer"><MessageCircle size={16} /><span>WhatsApp</span></a>
-            </div>
             <div className="social-links">
-              <a href={contactLinks.instagram} target="_blank" rel="noreferrer"><Instagram size={18} /><span>Instagram</span><ArrowUpRight size={13} /></a>
+              <a href={contactLinks.instagram} target="_blank" rel="noreferrer"><Instagram size={18} /><span>@kash__sunny_</span><ArrowUpRight size={13} /></a>
               <a href={contactLinks.github} target="_blank" rel="noreferrer"><Github size={18} /><span>GitHub</span><ArrowUpRight size={13} /></a>
               <a href={contactLinks.linkedin} target="_blank" rel="noreferrer"><Linkedin size={18} /><span>LinkedIn</span><ArrowUpRight size={13} /></a>
             </div>
           </Reveal>
         </section>
       </main>
-
-      <footer className="site-footer">
-        <a className="brand footer-brand" href="#home"><img src={ASSETS.mark} alt="" /><span className="brand-word">Sunn<span>Y</span><small>ORBITAL ID_014</small></span></a>
-        <p>SOFTWARE ENGINEER · INDIA</p>
-        <a href="#home" className="back-to-top">BACK TO TOP <ArrowUpRight size={14} /></a>
+      <footer className="mini-footer">
+        <p className="mini-footer-quote" aria-live="polite" key={footerQuoteIndex}>{FOOTER_QUOTES[footerQuoteIndex]}</p>
       </footer>
     </div>
   );
